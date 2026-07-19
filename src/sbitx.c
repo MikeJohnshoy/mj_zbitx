@@ -104,7 +104,7 @@ struct filter *tx_filter; // convolution filter
 static double tx_amp = 0.0;
 static double alc_level = 1.0;
 static int tr_relay = 0;
-static int rx_pitch = 700; // used only to offset the lo for CW,CWR
+static int rx_pitch = 700;   // should probably us get_pitch() directly
 static int bridge_compensation = 100;
 static double voice_clip_level = 0.04;
 static int in_calibration = 1; // this turns off alc, clipping et al
@@ -201,14 +201,19 @@ void radio_tune_to(u_int32_t f)
 	// tx_shift_hz now derived from tx_shift (no longer hardcoded 24000 here)
 	double tx_shift_hz = tx_shift * (96000.0 / MAX_BINS);
 	u_int32_t shift_hz = (u_int32_t)(tx_shift_hz + 0.5); // round so 5351 gets integers
+	// read pitch via get_pitch() rather than using the rx_pitch global: that
+	// global's compiled-in default (700) didn't match the PITCH field's own
+	// starting value (600, see "rx_pitch" field def in sbitx_gtk.c) and only
+	// ever got reconciled once the operator first touched the PITCH control
+	int pitch = get_pitch();
 	if (rx_list->mode == MODE_CW)
-		si5351bx_setfreq(2, f + bfo_freq + bfo_freq_runtime_offset - shift_hz + TUNING_SHIFT - rx_pitch);
+		si5351bx_setfreq(2, f + bfo_freq + bfo_freq_runtime_offset - shift_hz + TUNING_SHIFT - pitch);
 	else if (rx_list->mode == MODE_CWR)
-		si5351bx_setfreq(2, f + bfo_freq + bfo_freq_runtime_offset - shift_hz + TUNING_SHIFT + rx_pitch);
+		si5351bx_setfreq(2, f + bfo_freq + bfo_freq_runtime_offset - shift_hz + TUNING_SHIFT + pitch);
 	else
 		si5351bx_setfreq(2, f + bfo_freq + bfo_freq_runtime_offset - shift_hz + TUNING_SHIFT);
 
-	//  printf("Setting radio rx_pitch %d\n", rx_pitch);
+	//  printf("Setting radio pitch %d\n", pitch);
 }
 long set_bfo_offset(int offset, long cur_freq)
 {
