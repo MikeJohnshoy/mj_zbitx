@@ -57,4 +57,4 @@ void update_log_ed();
 void write_call_log();
 time_t time_sbitx();
 
-#define VER_STR "zbitx v5.03 center_bin fix"
+#define VER_STR "zbitx v5.03 freq offset fix"
