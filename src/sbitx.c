@@ -198,12 +198,15 @@ struct Queue qremote;
 
 void radio_tune_to(u_int32_t f)
 {
+	// tx_shift_hz now derived from tx_shift (no longer hardcoded 24000 here)
+	double tx_shift_hz = tx_shift * (96000.0 / MAX_BINS);
+	u_int32_t shift_hz = (u_int32_t)(tx_shift_hz + 0.5); // round so 5351 gets integers
 	if (rx_list->mode == MODE_CW)
-		si5351bx_setfreq(2, f + bfo_freq + bfo_freq_runtime_offset - 24000 + TUNING_SHIFT - rx_pitch);
+		si5351bx_setfreq(2, f + bfo_freq + bfo_freq_runtime_offset - shift_hz + TUNING_SHIFT - rx_pitch);
 	else if (rx_list->mode == MODE_CWR)
-		si5351bx_setfreq(2, f + bfo_freq + bfo_freq_runtime_offset - 24000 + TUNING_SHIFT + rx_pitch);
+		si5351bx_setfreq(2, f + bfo_freq + bfo_freq_runtime_offset - shift_hz + TUNING_SHIFT + rx_pitch);
 	else
-		si5351bx_setfreq(2, f + bfo_freq + bfo_freq_runtime_offset - 24000 + TUNING_SHIFT);
+		si5351bx_setfreq(2, f + bfo_freq + bfo_freq_runtime_offset - shift_hz + TUNING_SHIFT);
 
 	//  printf("Setting radio rx_pitch %d\n", rx_pitch);
 }
@@ -2188,9 +2191,12 @@ void set_rx_filter()
 	if (rx_list->mode == MODE_AM)
 	{
 		printf("Setting AM filter\n");
+		// Centered on tx_shift's Hz value (was hardcoded 24000, same class
+		// of bug as radio_tune_to() -- see radio_tune_to_center_bin_fix).
+		double if_center_hz = tx_shift * (96000.0 / MAX_BINS);
 		filter_tune(rx_list->filter,
-					(1.0 * (24000 - rx_list->high_hz)) / 96000.0,
-					(1.0 * (24000 + rx_list->high_hz)) / 96000.0,
+					(if_center_hz - rx_list->high_hz) / 96000.0,
+					(if_center_hz + rx_list->high_hz) / 96000.0,
 					5);
 	}
 	else if (rx_list->mode == MODE_LSB || rx_list->mode == MODE_CWR)
@@ -2674,7 +2680,11 @@ void setup()
 
 	vfo_start(&tone_a, 700, 0);
 	vfo_start(&tone_b, 1900, 0);
-	vfo_start(&am_carrier, 24000, 0);
+	// am_carrier is the actual suppressed-carrier oscillator tx_process()
+	// uses to build the real AM TX signal
+	// It must track tx_shift's Hz value or
+	// AM mode transmits at the wrong frequency once center_bin != 512.
+	vfo_start(&am_carrier, (int)(tx_shift * (96000.0 / MAX_BINS) + 0.5), 0);
 	delay(2000);
 	//	pf_debug = fopen("am_test.raw", "w");
 }
