@@ -2743,6 +2743,13 @@ void sdr_request(char *request, char *response)
 		// set the tx mode to that of the rx1
 		tx_list->mode = rx_list->mode;
 
+		// Entering CW/CWR needs the LO's pitch offset applied immediately
+		// otherwise the LO stays wherever the previous mode left it until
+		// the next dial-frequency change, and CW would transmit off the dial frequency
+		// from the moment TX starts.
+		if (rx_list->mode == MODE_CW || rx_list->mode == MODE_CWR)
+			radio_tune_to(freq_hdr);
+
 		// An interesting but non-essential note:
 		// the sidebands inverted twice, to come out correctly after all
 		// conisder that the second oscillator is set to 27.025 MHz and
@@ -2831,6 +2838,17 @@ void sdr_request(char *request, char *response)
 	else if (!strcmp(cmd, "rx_pitch"))
 	{
 		rx_pitch = atoi(value);
+		// radio_tune_to() includes the CW/CWR pitch offset into the LO
+		// but it's normally only invoked on a dial-frequency
+		// change. Without this update the LO keeps the *old* pitch offset while
+		// cw_tx_get_sample()'s audio oscillator jumps to the new pitch almost
+		// immediately and the mismatch shows up as the transmitted frequency
+		// moving by the amount the pitch was changed. Retuning here keeps the
+		// LO offset and the TX audio tone in lockstep so the far station's
+		// dial never moves, regardless of pitch. Only CW/CWR use pitch in
+		// radio_tune_to(), so this is a no-op in every other mode.
+		if (rx_list->mode == MODE_CW || rx_list->mode == MODE_CWR)
+			radio_tune_to(freq_hdr);
 	}
 	else if (!strcmp(cmd, "tx_gain"))
 	{
