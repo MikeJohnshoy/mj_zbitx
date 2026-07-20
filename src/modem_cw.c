@@ -395,6 +395,12 @@ static int cw_bytes_available = 0; //chars available in the tx queue
 #define CW_MAX_SYMBOLS 12
 char cw_key_letter[CW_MAX_SYMBOLS];
 
+// called when the PITCH control changes
+// Writing cached_pitch here means it's already correct by the time TX starts
+void cw_set_pitch(int hz){
+    cached_pitch = hz;
+}
+
 static uint8_t cw_get_next_symbol(){  //symbol to translate into CW_DOT, CW_DASH, etc
 
 	if (!symbol_next)
