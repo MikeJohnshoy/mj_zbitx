@@ -376,7 +376,12 @@ static int fldigi_tx_stop(){
 }
 
 void modem_set_pitch(int pitch, int mode){
-	
+
+	// keep the CW TX oscillator's cached pitch current the instant PITCH
+	// changes
+	if (mode == MODE_CW || mode == MODE_CWR)
+		cw_set_pitch(pitch);
+
 	//Sends an xmlrpc command to fldigi, so be selective of which modes we actually use it on - n1qm
 	switch (mode) {
 		case MODE_CW:
