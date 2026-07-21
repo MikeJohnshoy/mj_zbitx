@@ -3120,6 +3120,26 @@ if (!strcmp(field_str("SMETEROPT"), "ON") &&
 	int starting_bin = (MAX_BINS / 2) + get_tx_shift() - n_bins / 2;
 	int ending_bin = starting_bin + n_bins;
 
+	// TEMP DIAGNOSTIC (FT8 waterfall offset investigation): fires once per
+	// mode change, so a CW session and an FT8 session can be captured and
+	// diffed directly instead of guessing at the cause. Remove once resolved.
+#define SPECTRUM_WINDOW_DEBUG 1
+#if SPECTRUM_WINDOW_DEBUG
+	{
+		static char last_mode[32] = "";
+		if (strcmp(mode_f->value, last_mode) != 0)
+		{
+			strncpy(last_mode, mode_f->value, sizeof(last_mode) - 1);
+			last_mode[sizeof(last_mode) - 1] = '\0';
+			fprintf(stderr,
+				"[spectrum_window] mode=%s freq=%ld span=%.1f tx_shift=%d "
+				"n_bins=%d starting_bin=%d ending_bin=%d\n",
+				mode_f->value, freq, span, get_tx_shift(),
+				n_bins, starting_bin, ending_bin);
+		}
+	}
+#endif
+
 	float x_step = (1.0 * f->width) / n_bins;
 
 	// start the plot
