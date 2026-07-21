@@ -3115,7 +3115,9 @@ if (!strcmp(field_str("SMETEROPT"), "ON") &&
 	int n_bins = (int)((1.0 * spectrum_span) / 46.875);
 	// the center frequency is at the center of the lower sideband,
 	// i.e, three-fourth way up the bins.
-	int starting_bin = (3 * MAX_BINS) / 4 - n_bins / 2;
+	// get starting bin correct even when tx_shift is not 512
+	//int starting_bin = (3 * MAX_BINS) / 4 - n_bins / 2;
+	int starting_bin = (MAX_BINS / 2) + get_tx_shift() - n_bins / 2;
 	int ending_bin = starting_bin + n_bins;
 
 	float x_step = (1.0 * f->width) / n_bins;
@@ -6503,7 +6505,9 @@ void web_get_spectrum(char *buff)
 	int n_bins = (int)((1.0 * spectrum_span) / 46.875);
 	// the center frequency is at the center of the lower sideband,
 	// i.e, three-fourth way up the bins.
-	int starting_bin = (3 * MAX_BINS) / 4 - n_bins / 2;
+	//int starting_bin = (3 * MAX_BINS) / 4 - n_bins / 2;
+	// even when center_bin is not 512
+	int starting_bin = (MAX_BINS / 2) + get_tx_shift() - n_bins / 2;
 	int ending_bin = starting_bin + n_bins;
 
 	int j = 3;
