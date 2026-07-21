@@ -3273,7 +3273,9 @@ if (!strcmp(field_str("SMETEROPT"), "ON") &&
 	// draw the needle
 	for (struct rx *r = rx_list; r; r = r->next)
 	{
-		int needle_x = (f->width * (MAX_BINS / 2 - r->tuned_bin)) / (MAX_BINS / 2);
+		//int needle_x = (f->width * (MAX_BINS / 2 - r->tuned_bin)) / (MAX_BINS / 2);
+		// center display even when tuned bin is not 512
+		int needle_x = (f->width / 2) + (f->width * (get_tx_shift() - r->tuned_bin)) / (MAX_BINS / 2);
 		fill_rect(gfx, f->x + needle_x, f->y, 1, grid_height, SPECTRUM_NEEDLE);
 	}
 }
