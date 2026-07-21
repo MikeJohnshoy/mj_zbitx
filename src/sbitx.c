@@ -116,6 +116,12 @@ double notch_freq = 0;		   // Notch frequency in Hz W2JON
 double notch_bandwidth = 0;	   // Notch bandwidth in Hz W2JON
 int compression_control_level; // Audio Compression level W2JON
 int txmon_control_level;	   // TX Monitor level W2JON
+
+// share the current tx_shift value for spectrum and WF display purposes
+int get_tx_shift(void) {
+	return tx_shift;
+}
+
 int get_rx_gain(void)
 {
 	// printf("rx_gain %d\n", rx_gain);
