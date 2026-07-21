@@ -369,7 +369,10 @@ void spectrum_update()
 
 	// this has been hand optimized to lower
 	// the inordinate cpu usage
-	for (int i = 1269; i < 1803; i++)
+	// now adjusted to adapt to different center_bin value
+	int spectrum_update_start = (MAX_BINS / 2) + tx_shift - 267;
+	int spectrum_update_end = spectrum_update_start + 534;
+	for (int i = spectrum_update_start; i < spectrum_update_end; i++)
 	{
 
 		fft_bins[i] = ((1.0 - spectrum_speed) * fft_bins[i]) +
