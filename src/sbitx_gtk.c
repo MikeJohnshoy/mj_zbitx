@@ -3116,29 +3116,8 @@ if (!strcmp(field_str("SMETEROPT"), "ON") &&
 	// the center frequency is at the center of the lower sideband,
 	// i.e, three-fourth way up the bins.
 	// get starting bin correct even when tx_shift is not 512
-	//int starting_bin = (3 * MAX_BINS) / 4 - n_bins / 2;
-	int starting_bin = (MAX_BINS / 2) + get_tx_shift() - n_bins / 2;
+	int starting_bin = MAX_BINS - get_tx_shift() - n_bins / 2;
 	int ending_bin = starting_bin + n_bins;
-
-	// TEMP DIAGNOSTIC (FT8 waterfall offset investigation): fires once per
-	// mode change, so a CW session and an FT8 session can be captured and
-	// diffed directly instead of guessing at the cause. Remove once resolved.
-#define SPECTRUM_WINDOW_DEBUG 1
-#if SPECTRUM_WINDOW_DEBUG
-	{
-		static char last_mode[32] = "";
-		if (strcmp(mode_f->value, last_mode) != 0)
-		{
-			strncpy(last_mode, mode_f->value, sizeof(last_mode) - 1);
-			last_mode[sizeof(last_mode) - 1] = '\0';
-			fprintf(stderr,
-				"[spectrum_window] mode=%s freq=%ld span=%.1f tx_shift=%d "
-				"n_bins=%d starting_bin=%d ending_bin=%d\n",
-				mode_f->value, freq, span, get_tx_shift(),
-				n_bins, starting_bin, ending_bin);
-		}
-	}
-#endif
 
 	float x_step = (1.0 * f->width) / n_bins;
 
@@ -6527,7 +6506,7 @@ void web_get_spectrum(char *buff)
 	// i.e, three-fourth way up the bins.
 	//int starting_bin = (3 * MAX_BINS) / 4 - n_bins / 2;
 	// even when center_bin is not 512
-	int starting_bin = (MAX_BINS / 2) + get_tx_shift() - n_bins / 2;
+	int starting_bin = MAX_BINS - get_tx_shift() - n_bins / 2;
 	int ending_bin = starting_bin + n_bins;
 
 	int j = 3;
@@ -6642,7 +6621,7 @@ void zbitx_get_spectrum(char *buff){
   int n_bins = (int)((1.0 * spectrum_span) / 46.875);
   //the center frequency is at the center of the lower sideband,
   //i.e, three-fourth way up the bins.
-  int starting_bin = (MAX_BINS / 2) + get_tx_shift() - n_bins / 2;
+  int starting_bin = MAX_BINS - get_tx_shift() - n_bins / 2;
   int ending_bin = starting_bin + n_bins;
 
   int j;
