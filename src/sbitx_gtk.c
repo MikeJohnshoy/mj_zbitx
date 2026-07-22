@@ -6642,7 +6642,7 @@ void zbitx_get_spectrum(char *buff){
   int n_bins = (int)((1.0 * spectrum_span) / 46.875);
   //the center frequency is at the center of the lower sideband,
   //i.e, three-fourth way up the bins.
-  int starting_bin = (3 *MAX_BINS)/4 - n_bins/2;
+  int starting_bin = (MAX_BINS / 2) + get_tx_shift() - n_bins / 2;
   int ending_bin = starting_bin + n_bins;
 
   int j;
