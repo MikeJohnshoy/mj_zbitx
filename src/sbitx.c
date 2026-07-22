@@ -370,7 +370,12 @@ void spectrum_update()
 	// this has been hand optimized to lower
 	// the inordinate cpu usage
 	// now adjusted to adapt to different center_bin value
-	int spectrum_update_start = MAX_BINS - tx_shift - 267;
+	int spectrum_update_pitch_offset = 0;
+	if (rx_list->mode == MODE_CW)
+		spectrum_update_pitch_offset = (int)((get_pitch() / 46.875) + 0.5);
+	else if (rx_list->mode == MODE_CWR)
+		spectrum_update_pitch_offset = -(int)((get_pitch() / 46.875) + 0.5);
+	int spectrum_update_start = MAX_BINS - tx_shift - spectrum_update_pitch_offset - 267;
 	int spectrum_update_end = spectrum_update_start + 534;
 	for (int i = spectrum_update_start; i < spectrum_update_end; i++)
 	{
