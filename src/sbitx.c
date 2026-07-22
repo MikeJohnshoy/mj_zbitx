@@ -2752,12 +2752,8 @@ void sdr_request(char *request, char *response)
 		// set the tx mode to that of the rx1
 		tx_list->mode = rx_list->mode;
 
-		// Entering CW/CWR needs the LO's pitch offset applied immediately
-		// otherwise the LO stays wherever the previous mode left it until
-		// the next dial-frequency change, and CW would transmit off the dial frequency
-		// from the moment TX starts.
-		if (rx_list->mode == MODE_CW || rx_list->mode == MODE_CWR)
-			radio_tune_to(freq_hdr);
+		// Retune the LO on every mode change
+		radio_tune_to(freq_hdr);
 
 		// An interesting but non-essential note:
 		// the sidebands inverted twice, to come out correctly after all
