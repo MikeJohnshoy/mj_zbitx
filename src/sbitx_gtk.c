@@ -6785,6 +6785,11 @@ void zbitx_poll(int all){
 	//zero terminate the reply
 		buff[reply_length] = 0;
 
+		// TEMP DEBUG: dump exactly what the Pico sent back, so we can see
+		// whether power/vswr text is actually arriving and in what form.
+		// Remove once the readout is confirmed working.
+		fprintf(stderr, "zbitx_poll: reply_length=%d buff=[%s]\n", reply_length, buff);
+
 		if(!strncmp(buff, "FT8 ", 4)){
 			char ft8_message[100];
 			hd_strip_decoration(ft8_message, buff);
@@ -6797,7 +6802,28 @@ void zbitx_poll(int all){
 				update_logs = 1;
 				printf("<<<< refresh the log >>>>>\n");
 			}
-			remote_execute(buff);
+			// the reply can be several newline-separated commands in one
+			// block (e.g. "vbatt %d\npower %d\nvswr %d\n"). cmd_exec()
+			// only parses a single command per call and treats embedded
+			// newlines as part of the first command's argument string,
+			// so split on '\n' and execute each line separately.
+			char *line = strtok(buff, "\n");
+			while (line){
+				if (strlen(line))
+					remote_execute(line);
+				line = strtok(NULL, "\n");
+			}
+		}
+	}
+	else{
+		// TEMP DEBUG: rate-limited notice when the Pico read fails outright
+		// (returns -1), so we can tell "not talking to us" apart from
+		// "talking, but not sending power/vswr". Remove once confirmed.
+		static unsigned int last_fail_print = 0;
+		unsigned int now_ms = millis();
+		if (now_ms - last_fail_print > 2000) {
+			fprintf(stderr, "zbitx_poll: i2cbb_read_rll(0xa) FAILED (-1)\n");
+			last_fail_print = now_ms;
 		}
 	}
 	last_update = this_time;
@@ -6834,6 +6860,14 @@ void zbitx_init(){
 	if (!e){
 		printf("zBitx front panel detected\n");
 		zbitx_available = 1;
+	}
+	else{
+		// TEMP DEBUG: this was failing completely silently before --
+		// zbitx_available stayed 0 and nothing downstream (zbitx_poll,
+		// power/vswr updates) ever ran, with no indication why.
+		fprintf(stderr, "zbitx_init: front panel NOT detected (i2cbb_write_i2c_block_data returned %d)\n", e);
+	}
+	if (zbitx_available){
 
 
  		e = i2cbb_write_i2c_block_data (ZBITX_I2C_ADDRESS, '{', 
@@ -7103,15 +7137,6 @@ gboolean ui_tick(gpointer gook)
 		if (zbitx_available)
 			zbitx_poll(0);
 
-		if (in_tx)
-		{
-			char buff[10];
-
-			sprintf(buff, "%d", fwdpower);
-			set_field("#fwdpower", buff);
-			sprintf(buff, "%d", vswr);
-			set_field("#vswr", buff);
-		}
 		if (layout_needs_refresh)
 		{
 			layout_ui();
@@ -8218,6 +8243,13 @@ void cmd_exec(char *cmd)
 		char output[500];
 		sprintf(output, "BFO %d offset = %d\n", get_bfo_offset(), result);
 		write_console(FONT_LOG, output);
+	}
+	// the #vswr field's on-screen label is "REF", not "VSWR", so the
+	// generic label-matching dispatch below can never route the Pico's
+	// "vswr N" command to it -- handle it explicitly.
+	else if (!strcmp(exec, "vswr"))
+	{
+		set_field("#vswr", args);
 	}
 	//'Band scale' setting to adjust scale for easier adjustment for tuning power output - n1qm
 	else if (!strcmp(exec, "bs"))
